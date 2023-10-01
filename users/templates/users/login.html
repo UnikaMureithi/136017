@@ -7,10 +7,11 @@
     <div class="container" style="margin-top: 30px;">
     <form action="" method="POST">
       {% csrf_token %}
-      <fieldset class="form-group">
+      <fieldset class="form-group" style="width: 600px;">
           <legend class="border-bottom mb-4" style="color: white;">LOGIN</legend>
           {{ form|crispy }}
       </fieldset>
+      <br>
       <div class="form-group" id="signup-button" style="background-color: #59049a;">
           <button class="btn " style="color: white;">Login</button>
       </div>
