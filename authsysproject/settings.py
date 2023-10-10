@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -135,3 +136,11 @@ STATICFILES_DIRS = [
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 LOGIN_REDIRECT_URL = 'home'
+
+JAZZMIN_SETTINGS = {
+    'site_header': "CVD Predictions Admin",
+    'site_brand': "CVD Predictions",
+    'site_logo': None,
+    # 'site_logo': "images/logo.png",
+    'copyright': "CVD Predictions.com",
+}
