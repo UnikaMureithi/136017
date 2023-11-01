@@ -4,9 +4,20 @@ from .forms import UserRegisterForm, UserPredictionForm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 
 def home(request):
-    return render(request, 'users/home.html')
+    #return HttpResponse(request.user.user_type)
+    if request.user.user_type == 'doctor':
+        if request.method == 'POST':
+            form = UserPredictionForm(request.POST)
+            if form.is_valid():
+                form.save()
+        else:
+            form = UserPredictionForm()
+        return render(request, 'users/prediction.html', {'form': form})
+    else:
+        return render(request, 'users/home.html')
 
 def register(request):
     if request.method == "POST":
@@ -44,8 +55,8 @@ def login_view(request):
         if user is not None:
             if user.is_active:
                 if user.user_type == 'patient':
-                    login(request, user)
-                    return redirect('home')  # Redirect patients to 'home'
+                    #login(request, user)
+                    return redirect('/prediction')  # Redirect patients to 'home'
                 elif user.user_type == 'doctor':
                     login(request, user)
                     return redirect('prediction')  # Redirect doctors to 'prediction'
