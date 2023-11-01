@@ -2,18 +2,29 @@ from django.db import models
 # from django.contrib.auth.models import User
 # from django.utils import timezone
 
-from django.contrib.auth.models import AbstractUser, Permission
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import Group
-class CustomUser(AbstractUser):
-    # Add custom fields here
-    is_patient = models.BooleanField(default=False)
-    is_doctor = models.BooleanField(default=False)
-    groups = models.ManyToManyField(Group, related_name='custom_users')
-    user_permissions = models.ManyToManyField(Permission, related_name='custom_users')
 
-class Doctor(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=1)
+class CustomUser(AbstractUser):
+    USER_TYPES = (
+        ('patient', 'Patient'),
+        ('doctor', 'Doctor'),
+    )
+    
+    username = models.CharField(unique=True, max_length=255, default="")
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    location = models.CharField(max_length=255, default='YourDefaultValueHere')
+    user_type = models.CharField(max_length=10, choices=USER_TYPES, default='patient')
+
+
+    def __str__(self):
+        return self.username
+
+
+# class Doctor(models.Model):
+#     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=1)
 
 # from django.contrib.auth.models import AbstractUser
 
@@ -44,7 +55,7 @@ class Doctor(models.Model):
 #     def __str__(self):
 #         return self.first_name
 
-# class Prediction(models.Model):
-#     age = models.CharField(max_length=5)
-#     height = models.IntegerField()
-#     weight = models.IntegerField()
+class Prediction(models.Model):
+    age = models.CharField(max_length=5)
+    height = models.IntegerField()
+    weight = models.IntegerField()

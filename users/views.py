@@ -1,11 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
-from .forms import UserRegisterForm
-# from .forms import UserPredictionForm
+from .forms import UserRegisterForm, UserPredictionForm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
-
-
 from django.contrib import messages
 
 def home(request):
@@ -22,11 +19,9 @@ def register(request):
     else:
         form = UserRegisterForm()
 
-    return render(request, 'users/register.html', {'form':form})
+    return render(request, 'users/register.html', {'form': form})
 
-# def prediction(request):
-#     return render(request, 'users/prediction.html')
-
+@login_required
 def prediction(request):
     if request.method == 'POST':
         form = UserPredictionForm(request.POST)
@@ -37,13 +32,8 @@ def prediction(request):
 
     return render(request, 'users/prediction.html', {'form': form})
 
-
 def profile(request):
-        return render(request, 'users/profile.html')
-
-def logout(request):
-    return redirect('home')
-
+    return render(request, 'users/profile.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -52,28 +42,23 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            if user.groups.filter(name='Patients').exists():
-                login(request, user)
-                return redirect('users/home.html')  # Replace with your patient's dashboard URL
-            elif user.groups.filter(name='Doctors').exists():
-                login(request, user)
-                return redirect('users/prediction.html')  # Replace with your doctor's dashboard URL
+            if user.is_active:
+                if user.user_type == 'patient':
+                    login(request, user)
+                    return redirect('home')  # Redirect patients to 'home'
+                elif user.user_type == 'doctor':
+                    login(request, user)
+                    return redirect('prediction')  # Redirect doctors to 'prediction'
+                else:
+                    # Handle other roles or unknown users
+                    pass
             else:
-                # Handle other roles or unknown users
+                # Handle inactive users
                 pass
         else:
             # Handle invalid login
             pass
 
-    return render(request, 'login.html')
+    return render(request, 'users/login.html')
 
 
-@login_required
-def patient_dashboard(request):
-    # Patient dashboard logic
-    return render(request, 'users/home.html')
-
-@login_required
-def doctor_dashboard(request):
-    # Doctor dashboard logic
-    return render(request, 'users/prediction.html')

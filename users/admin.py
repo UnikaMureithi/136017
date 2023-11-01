@@ -1,40 +1,33 @@
 from django.contrib import admin
-from users import models
-# Register your models here.
-
-# users/admin.py
-
-from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from .models import CustomUser
-
-class CustomUserCreationForm(UserCreationForm):
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'email', 'is_patient', 'is_doctor')
-
-class CustomUserChangeForm(UserChangeForm):
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'email', 'is_patient', 'is_doctor')
-
-# class CustomUserAdmin(UserAdmin):
-#     add_form = CustomUserCreationForm
-#     form = CustomUserChangeForm
-#     model = CustomUser
-#     list_display = ('username', 'email', 'is_patient', 'is_doctor')
+from .forms import UserForm, UserRegisterForm
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'is_patient', 'is_doctor')
-    list_filter = ('is_patient', 'is_doctor')
-    fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        ('Personal Info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Custom Fields', {'fields': ('is_patient', 'is_doctor')}),
+    add_form = UserForm  # Use the UserForm for adding users
+    form = UserRegisterForm  # Use the UserRegisterForm for updating users
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'first_name', 'last_name', 'location', 'password1', 'password2', 'user_type')
+        }),
     )
+
+    # Customize the list of columns to be displayed in the admin list view
+    list_display = ('username', 'email', 'first_name', 'last_name', 'location', 'user_type')
+
+    # Allow admin to register users for both user types
+    actions = ['register_patient', 'register_doctor']
+
+    def register_patient(self, request, queryset):
+        # Register selected users as patients
+        queryset.update(user_type='patient')
+    register_patient.short_description = "Register selected users as patients"
+
+    def register_doctor(self, request, queryset):
+        # Register selected users as doctors
+        queryset.update(user_type='doctor')
+    register_doctor.short_description = "Register selected users as doctors"
+
+# Register the CustomUser model with the CustomUserAdmin class
 admin.site.register(CustomUser, CustomUserAdmin)
-
-
-# admin.site.register(models.Doctor)

@@ -135,6 +135,7 @@ STATICFILES_DIRS = [
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+
 LOGIN_REDIRECT_URL = 'home'
 
 JAZZMIN_SETTINGS = {
@@ -144,3 +145,5 @@ JAZZMIN_SETTINGS = {
     # 'site_logo': "images/logo.png",
     'copyright': "CVD Predictions.com",
 }
+
+AUTH_USER_MODEL = 'users.CustomUser'
