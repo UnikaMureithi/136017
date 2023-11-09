@@ -4,7 +4,10 @@ from django.db import models
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+class PredictionResult(models.Model):
+    prediction_id = models.AutoField(primary_key=True)
+    prediction = models.CharField(max_length=50)
+    timestamp = models.DateTimeField(auto_now_add=True)
 class CustomUser(AbstractUser):
     USER_TYPES = (
         ('patient', 'Patient'),
@@ -15,47 +18,58 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    location = models.CharField(max_length=255, default='YourDefaultValueHere')
+    location = models.CharField(max_length=20, default='location')
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='patient')
 
 
     def __str__(self):
         return self.username
-
-
-# class Doctor(models.Model):
-#     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, default=1)
-
-# from django.contrib.auth.models import AbstractUser
-
-# class CustomUser(AbstractUser):
-#     USER_TYPES = (
-#         ('patient', 'Patient'),
-#         ('doctor', 'Doctor'),
-#         ('admin', 'Admin'),
-#     )
-#     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='patient')
-    
-    # Add any other custom fields as needed
-
-
-
-# class Doctor (models.Model):
-#     username = models.CharField(
-#         max_length=25, null=False, default='-', verbose_name='username')
-#     password = models.CharField(
-#         max_length=25, null=False, default='-', verbose_name='password')
-#     first_name = models.CharField(
-#         max_length=25, null=False, verbose_name='first_name')
-#     last_name = models.CharField(
-#         max_length=25, null=False, verbose_name='last_name')
-#     phone = models.CharField(max_length=10, null=False,
-#                              verbose_name='phone number')
-
-#     def __str__(self):
-#         return self.first_name
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 class Prediction(models.Model):
-    age = models.CharField(max_length=5)
+#1: normal, 2: above normal, 3: well above normal
+    cholesterol_level = (
+        ('1', 'normal'),
+        ('2', 'above normal'),
+        ('3', 'well above normal'),
+
+    )
+    glucose_level = (
+        ('1', 'normal'),
+        ('2', 'above normal'),
+        ('3', 'well above normal'),
+
+    )
+    smoking_status = (
+        ('0', 'non-smoker'),
+        ('1', 'smoker'),
+
+    )
+    alcohol_intake = (
+        ('0', 'no alcohol'),
+        ('1', 'yes alcohol'),
+
+    )
+    physical_activity = (
+        ('0', 'not physically active'),
+        ('1', 'physically active'),
+
+    )
+    gender = (
+        ('1', 'male'),
+        ('2', 'female'),
+
+    )
+
+    age = models.IntegerField()
     height = models.IntegerField()
-    weight = models.IntegerField()
+    weight = models.FloatField()
+    gender = models.CharField(max_length=10, choices=gender, default='male')
+    systolic_blood_pressure = models.FloatField(default=0)
+    diastolic_bp = models.FloatField(default=0, null=True)
+    cholesterol = models.CharField(max_length=6, choices=cholesterol_level, default='normal')
+    glucose = models.CharField(max_length=25, choices=glucose_level, default='normal')
+    smoking_status = models.CharField(max_length=25, choices=smoking_status, default='non-smoker')
+    alcohol_intake = models.CharField(max_length=25, choices=alcohol_intake, default='no_alcohol')
+    physical_activity = models.CharField(max_length=25, choices=physical_activity, default='no')

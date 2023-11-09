@@ -37,14 +37,22 @@ class UserRegisterForm(UserCreationForm):
         fields = ['username', 'email', 'first_name', 'last_name', 'location', 'password1', 'password2', 'user_type']
 
     def save(self, commit=True):
-        user = super(UserForm, self).save(commit=False)
+        user = super(UserRegisterForm, self).save(commit=False)
         user.password = make_password(self.cleaned_data['password1'])
         if commit:
             user.save()
         return user
 
 class UserPredictionForm(forms.ModelForm):
+    patient = forms.ModelChoiceField(
+    queryset=CustomUser.objects.filter(user_type='patient'),
+    to_field_name='id',  # Specify the field to use for values
+    label='Select a Patient',
+    empty_label='Select a Patient',
+    )
     class Meta:
         model = Prediction
         fields = '__all__'
 
+    # Specify the order of fields in the form
+    fields = ['patient', 'age', 'height', 'weight', 'gender', 'systolic_blood_pressure', 'diastolic_bp', 'cholesterol', 'glucose', 'smoking_status', 'alcohol_intake', 'physical_activity']
