@@ -9,13 +9,15 @@
             {% csrf_token %}
             <fieldset class="form-group" style="width: 600px;">
                 <legend class="border-bottom mb-4" style="color: white;">Prediction for a Patient</legend>
-                {{ form.patient }}
-            {{ form|crispy }}
-        </fieldset>
-        <br>
+                {{ form|crispy }}
+            </fieldset>
+            <br>
             <div class="form-group" id="signup-button" style="background-color: #59049a;">
                 <button class="btn " style="color: white;">Predict</button>
             </div>
+            {% if prediction %}
+                <p style="color: white; font-weight: bold;">Prediction Outcome: {{ prediction }}</p>
+            {% endif %}
         </form>
     </div>
 {% endblock %}
