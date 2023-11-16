@@ -32,7 +32,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
+    # 'jazzmin',
+
+    'django_light',
+    
+    'admin_tools_stats',
+    'django_nvd3',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,6 +49,9 @@ INSTALLED_APPS = [
     # own
     'users.apps.UsersConfig',
     'crispy_forms',
+
+    'django_otp',
+    'django_otp.plugins.otp_totp',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +60,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    'django_otp.middleware.OTPMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -114,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 
@@ -141,12 +153,12 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 LOGIN_REDIRECT_URL = 'home'
 
-JAZZMIN_SETTINGS = {
-    'site_header': "CVD Predictions Admin",
-    'site_brand': "CVD Predictions",
-    'site_logo': None,
-    # 'site_logo': "images/logo.png",
-    'copyright': "CVD Predictions.com",
-}
+# JAZZMIN_SETTINGS = {
+#     'site_header': "CVD Predictions Admin",
+#     'site_brand': "CVD Predictions",
+#     'site_logo': None,
+#     # 'site_logo': "images/logo.png",
+#     'copyright': "CVD Predictions.com",
+# }
 
 AUTH_USER_MODEL = 'users.CustomUser'

@@ -45,14 +45,19 @@ class UserRegisterForm(UserCreationForm):
 
 class UserPredictionForm(forms.ModelForm):
     patient = forms.ModelChoiceField(
-    queryset=CustomUser.objects.filter(user_type='patient'),
-    to_field_name='id',  # Specify the field to use for values
-    label='Select a Patient',
-    empty_label='Select a Patient',
+        queryset=CustomUser.objects.filter(user_type='patient'),
+        to_field_name='id',
+        label='Select a Patient',
     )
+
     class Meta:
         model = Prediction
-        fields = '__all__'
+        fields = ['patient', 'age', 'gender','height', 'weight', 'systolic', 'diastolic', 'cholesterol', 'glucose', 'smoke', 'alcohol', 'active']
 
-    # Specify the order of fields in the form
-    fields = ['patient', 'age', 'height', 'weight', 'gender', 'systolic_blood_pressure', 'diastolic_bp', 'cholesterol', 'glucose', 'smoking_status', 'alcohol_intake', 'physical_activity']
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.name = instance.patient.full_name()
+        if commit:
+            instance.save()
+        return instance
+    # You can also use the 'fields' attribute directly in the class definition.

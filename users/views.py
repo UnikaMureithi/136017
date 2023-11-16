@@ -7,41 +7,37 @@ from django.contrib import messages
 from django.http import HttpResponse
 import xgboost as xgb
 import pickle
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from .models import Result,Prediction
 from django.contrib import messages 
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView
+from sklearn.preprocessing import StandardScaler
 
 
 
 
-# Load the XGBoost model
-model_path = "C:/Users/unika/authsystem/authsysproject/models/xgboost_model.pkl"
-with open(model_path, 'rb') as model_file:
+# Load the model
+with open('C:/Users/unika/authsystem/authsysproject/models/xgb_model.pkl', 'rb') as model_file:
     xgb_model = pickle.load(model_file)
+
+# Load the scaler
+with open('C:/Users/unika/authsystem/authsysproject/models/scaler.pkl', 'rb') as scaler_file:
+    scaler = pickle.load(scaler_file)
 
 def make_prediction(data):
     try:
-        # Convert categorical columns to numerical representations
-        data['gender'] = '1' if data['gender'] == 'male' else '2'
-        data['cholesterol'] = data['cholesterol'].encode('utf-8')
-        data['glucose'] = data['glucose'].encode('utf-8')
-        data['smoking_status'] = data['smoking_status'].encode('utf-8')
-        data['alcohol_intake'] = data['alcohol_intake'].encode('utf-8')
-        data['physical_activity'] = data['physical_activity'].encode('utf-8')
+        # Create a DataFrame from the form data
+        features_df = pd.DataFrame(data, index=[0])
 
-        # Create a NumPy array from the data
-        features = np.array([[
-            data['age'], data['height'], data['weight'], data['gender'],
-            data['systolic_blood_pressure'], data['diastolic_bp'],
-            data['cholesterol'], data['glucose'], data['smoking_status'],
-            data['alcohol_intake'], data['physical_activity']
-        ]])
+        # Apply the scaler to the features
+        features_scaled = scaler.transform(features_df)
 
-        raw_prediction = xgb_model.predict(features)[0]
-        prediction = int(raw_prediction > 0.5)  # Assuming a threshold of 0.5
+        # Make predictions using the loaded model
+        prediction = xgb_model.predict(features_scaled)[0]
 
         return prediction
 
@@ -49,19 +45,68 @@ def make_prediction(data):
         print(f"Error in make_prediction: {e}")
         return None
 
+        
 
-# def home(request):
-#     if hasattr(request.user, 'user_type') and request.user.user_type == 'doctor':
-#         if request.method == 'POST':
-#             form = UserPredictionForm(request.POST)
-#             if form.is_valid():
-#                 form.save()
-#                 return redirect('prediction')  # Redirect to the prediction page after saving the form
-#         else:
-#             form = UserPredictionForm()
-#         return render(request, 'users/prediction.html', {'form': form})
-#     else:
-#         return render(request, 'users/home.html')
+
+def prediction(request):
+    prediction_result = None
+
+    if request.method == 'POST':
+        form = UserPredictionForm(request.POST)
+        if form.is_valid():
+            try:
+                # Get the form data and make predictions
+                data = {
+                    'age': form.cleaned_data['age'],
+                    'gender': form.cleaned_data['gender'],
+                    'height': form.cleaned_data['height'],
+                    'weight': form.cleaned_data['weight'],
+                    'systolic': form.cleaned_data['systolic'],
+                    'diastolic': form.cleaned_data['diastolic'],
+                    'cholesterol': form.cleaned_data['cholesterol'],
+                    'glucose': form.cleaned_data['glucose'],
+                    'smoke': form.cleaned_data['smoke'],
+                    'alcohol': form.cleaned_data['alcohol'],
+                    'active': form.cleaned_data['active'],
+                }
+
+                # Make predictions
+                raw_prediction = make_prediction(data)
+
+                # Map raw prediction to human-readable labels
+                prediction_result = "Presence of CVD" if raw_prediction == 1 else "Absence of CVD"
+
+                # Save the prediction result in the database
+                patient = form.cleaned_data['patient']
+                user_prediction = Prediction(
+                    patient=patient, 
+                    doctor=request.user,
+                    name=f"{patient.first_name} {patient.last_name}", 
+                    **data
+                )
+                user_prediction.save()
+
+                # Create a Result instance with the prediction
+                prediction_result_instance = Result(doctor=request.user, patient=user_prediction, prediction=prediction_result)
+                prediction_result_instance.save()
+
+                # Add a success message with the prediction result
+                messages.success(request, f'The prediction result is: {prediction_result}')
+
+            except Exception as e:
+                print(f"Error during prediction: {e}")
+                messages.error(request, 'An error occurred during prediction. Please try again.')
+
+            # Redirect to the same page after form submission
+            return redirect('prediction')
+
+    else:
+        form = UserPredictionForm()
+
+    return render(request, 'users/prediction.html', {'form': form, 'prediction': prediction_result})
+
+
+
 
 def home(request):
     return render(request, 'users/home.html')
@@ -80,49 +125,6 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 
-def prediction(request):
-    prediction = None  # Initialize prediction variable
-
-    if request.method == 'POST':
-        form = UserPredictionForm(request.POST)
-        if form.is_valid():
-            # Get the form data and make predictions
-            data = {
-                'age': form.cleaned_data['age'],
-                'height': form.cleaned_data['height'],
-                'weight': form.cleaned_data['weight'],
-                'gender': form.cleaned_data['gender'],
-                'systolic_blood_pressure': form.cleaned_data['systolic_blood_pressure'],
-                'diastolic_bp': form.cleaned_data['diastolic_bp'],
-                'cholesterol': form.cleaned_data['cholesterol'],
-                'glucose': form.cleaned_data['glucose'],
-                'smoking_status': form.cleaned_data['smoking_status'],
-                'alcohol_intake': form.cleaned_data['alcohol_intake'],
-                'physical_activity': form.cleaned_data['physical_activity'],
-            }
-            raw_prediction = make_prediction(data)
-
-            # Map raw prediction to human-readable labels
-            prediction = "Presence of CVD" if raw_prediction == 1 else "Absence of CVD"
-
-            # Save the prediction result in the database
-            user_prediction = Prediction(**data)
-            user_prediction.save()
-
-            # Create a Result instance with the prediction
-            prediction_result = Result(user=request.user, patient=user_prediction, prediction=prediction)
-            prediction_result.save()
-
-            # Add a success message with the prediction result
-            messages.success(request, f'The prediction result is: {prediction}')
-
-            # Redirect to the same page after successful prediction
-            return redirect('prediction')
-
-    else:
-        form = UserPredictionForm()
-
-    return render(request, 'users/prediction.html', {'form': form, 'prediction': prediction})
 
 
 
@@ -130,6 +132,8 @@ def prediction(request):
 def profile(request):
     return render(request, 'users/profile.html')
 
+def about(request):
+    return render(request, 'users/about.html')
 
 
 class CustomLoginView(LoginView):

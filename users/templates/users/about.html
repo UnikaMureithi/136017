@@ -1,0 +1,123 @@
+{% extends 'users/base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <style>
+        body {
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid white;
+            padding: 10px;
+            text-align: left;
+            color: white;
+        }
+
+        th {
+            background-color: #333;
+        }
+
+        tr:nth-child(even) {
+            background-color: #555;
+        }
+    </style>
+</head>
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+<div class="container">
+        <div class="row g-0">
+            <!-- <div class="col-sm-6 col-md-8" id="header-text"> -->
+              <!-- <h1 id="header-h1" style="color: white;"></h1> -->
+              <u><h1 style="text-align: center; margin-top: 10pt;">Information about the CVD Prediction Application</h1></u>
+              <p style="font-size: 15pt;text-align: center;">Welcome to the Cardiovascular Disease (CVD) Prediction Web Application! <br> Our tool utilizes a variety of features to assess the risk of cardiovascular disease. <br>These features are categorized into objective and subjective aspects, each contributing <br>valuable information to the prediction model.</p>
+
+<h2>Objective Features</h2>
+
+<p style="font-size: 15pt;">1. <strong>Age:</strong>
+    <br>Data Type: Integer (years)
+    <br>Input Variable: <code>age</code></p>
+
+<p style="font-size: 15pt;">2. <strong>Height:</strong>
+    <br>Data Type: Integer (cm)
+    <br>Input Variable: <code>height</code></p>
+
+<p style="font-size: 15pt;">3. <strong>Weight:</strong>
+    <br>Data Type: Float (kg)
+    <br>Input Variable: <code>weight</code></p>
+
+<p style="font-size: 15pt;">4. <strong>Gender:</strong>
+    <br>Data Type: Categorical Code- Male=0 and Female=1
+    <br>Input Variable: <code>gender</code></p>
+
+<h2>Examination Features</h2>
+<p style="font-size: 15pt;">(For the features below, as a Patient, one may be required to visit a clinic in order to get proper accurate readings)</p>
+<p style="font-size: 15pt;">1. <strong>Systolic Blood Pressure:</strong>
+    <br>Data Type: Integer
+    <br>Input Variable: <code>ap_hi</code>
+    <br>Description: Systolic blood pressure is the higher of the two numbers measured when your heart beats.</p>
+
+<p style="font-size: 15pt;">2. <strong>Diastolic Blood Pressure:</strong>
+    <br>Data Type: Integer
+    <br>Input Variable: <code>ap_lo</code>
+    <br>Description: Diastolic blood pressure is the lower of the two numbers measured when your heart is at rest between beats.</p>
+
+    <h2>Blood Pressure Categories</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Blood Pressure Category</th>
+                <th>Systolic mm Hg (upper number)</th>
+                <th>Diastolic mm Hg (lower number)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>NORMAL</td>
+                <td>LESS THAN 120</td>
+                <td>LESS THAN 80</td>
+            </tr>
+            <tr>
+                <td>ELEVATED</td>
+                <td>120 – 129</td>
+                <td>LESS THAN 80</td>
+            </tr>
+            <tr>
+                <td>HIGH BLOOD PRESSURE (HYPERTENSION) STAGE 1</td>
+                <td>130 – 139</td>
+                <td>80 – 89</td>
+            </tr>
+            <tr>
+                <td>HIGH BLOOD PRESSURE (HYPERTENSION) STAGE 2</td>
+                <td>140 OR HIGHER</td>
+                <td>90 OR HIGHER</td>
+            </tr>
+            <tr>
+                <td>HYPERTENSIVE CRISIS (consult your doctor immediately)</td>
+                <td>HIGHER THAN 180</td>
+                <td>HIGHER THAN 120</td>
+            </tr>
+        </tbody>
+    </table>
+<p style="font-size: 15pt;">3. <strong>Cholesterol:</strong>
+    <br>Data Type: Categorical (1: Normal, 2: Above Normal, 3: Well Above Normal)
+    <br>Input Variable: <code>cholesterol</code>
+    <br>Description: Cholesterol levels indicate the amount of fatty deposits in the blood. A simple blood test called a lipid panel is used to measure total cholesterol</p>
+
+<p style="font-size: 15pt;">4. <strong>Glucose:</strong>
+    <br>Data Type: Categorical (1: Normal, 2: Above Normal, 3: Well Above Normal)
+    <br>Input Variable: <code>gluc</code>
+    <br>Description: Glucose levels indicate the amount of sugar in the blood. A simple blood test can be used to measure glucose</p>
+
+            <!-- </div> -->
+
+            <div class="col-6 col-md-4" id="header-image"><img src="images/in-liquid-slide-2.svg " alt=""></div>
+          </div>
+</div>
+{% endblock content %}
