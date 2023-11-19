@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported List of Results</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exported List of Results</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Doctor</th>
+                <th>Patient</th>
+                <th>Age</th>
+                <th>Height</th>
+                <th>Weight</th>
+                <th>Gender</th>
+                <th>Systolic BP</th>
+                <th>Diastolic BP</th>
+                <th>Cholesterol</th>
+                <th>Glucose</th>
+                <th>Smoking status</th>
+                <th>Alcohol intake</th>
+                <th>Physical activity</th>
+                <th>Prediction result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+                <tr>
+                    <td>{{ result.doctor }}</td>
+                    <td>{{ result.patient }}</td>
+                    {% with prediction=result.prediction %}
+                        <td>{{ prediction.age }}</td>
+                        <td>{{ prediction.height }}</td>
+                        <td>{{ prediction.weight }}</td>
+                        <td>{{ prediction.gender }}</td>
+                        <td>{{ prediction.systolic }}</td>
+                        <td>{{ prediction.diastolic }}</td>
+                        <td>{{ prediction.cholesterol }}</td>
+                        <td>{{ prediction.glucose }}</td>
+                        <td>{{ prediction.smoke }}</td>
+                        <td>{{ prediction.alcohol }}</td>
+                        <td>{{ prediction.active }}</td>
+                    {% endwith %}
+                    <td>{{ result.prediction }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>    </table>
+</body>
+</html>

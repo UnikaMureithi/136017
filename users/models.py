@@ -74,12 +74,12 @@ class Prediction(models.Model):
     
     
     
-    
-       
+    def patient_full_name(self):
+        return f"{self.patient.first_name} {self.patient.last_name}"
 
-    def _str_(self):
-        return f'{self.patient.first_name} {self.patient.last_name}'
-    
+    def __str__(self):
+        return f'{self.patient_full_name()}'
+           
     def clean(self):
         if self.age < 0:
             raise ValidationError("Age cannot be negative.")

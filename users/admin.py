@@ -2,56 +2,16 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser,Prediction,Result
 from .forms import UserForm, UserRegisterForm
-
+from django.http import FileResponse
 from reportlab.pdfgen import canvas
-from django.http import HttpResponse
-from django.utils import timezone
-
-from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-
-def draw_table(pdf, headers, data, x, y):
-    """
-    Draw a table on the PDF.
-    :param pdf: The PDF object.
-    :param headers: List of table headers.
-    :param data: List of lists containing table data.
-    :param x: X-coordinate to start drawing the table.
-    :param y: Y-coordinate to start drawing the table.
-    """
-    # Create a list to hold the data including headers
-    table_data = [headers] + data
-
-    # Set a fixed width for each column
-    col_widths = [85, 140, 70, 70, 60, 70, 60, 60, 50, 50, 70, 70, 70, 70, 70, 80]
-
-    # Create a Table object
-    table = Table(table_data, colWidths=col_widths)
-
-    # Apply styles to the table
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ])
-    table.setStyle(style)
-
-    # Draw the table on the PDF
-    table.wrapOn(pdf, pdf._pagesize[0] - 50, pdf._pagesize[1])
-    table.drawOn(pdf, x, y)
-
-
-
-
-
-
-
-
-
-
+import io
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A3
 
 class CustomUserAdmin(UserAdmin):
     add_form = UserForm  # Use the UserForm for adding users
@@ -67,7 +27,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'location', 'user_type')
 
     # Allow admin to register users for both user types
-    actions = ['register_patient', 'register_doctor']
+    actions = ['register_patient', 'register_doctor','export_selected_to_pdf']
 
     def register_patient(self, request, queryset):
         # Register selected users as patients
@@ -78,41 +38,59 @@ class CustomUserAdmin(UserAdmin):
         # Register selected users as doctors
         queryset.update(user_type='doctor')
     register_doctor.short_description = "Register selected users as doctors"
+    
 
-    actions = ['register_patient', 'register_doctor', 'export_users_as_pdf']
+   
 
-    def export_users_as_pdf(self, request, queryset):
-        # Generate and return the PDF response
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="selected_users_report.pdf"'
 
-        # Create the PDF object, using the response object as its "file."
-        p = canvas.Canvas(response)
+    def export_selected_to_pdf(self, request, queryset):
+        # Create a file-like buffer to receive PDF data.
+        buffer = io.BytesIO()
 
-        # Add a title to the PDF
-        p.drawString(100, 800, "Selected Users Report")
-        p.drawString(100, 780, f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        # Create the PDF object, using the buffer as its "file."
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-        # Export selected Users
-        user_headers = ['Username', 'Email', 'First Name', 'Last Name', 'Location', 'User Type']
-        user_data = [[user.username, user.email, user.first_name, user.last_name, user.location, user.user_type] for user in queryset]
+        # Prepare data for the table
+        data = [['Username', 'Email', 'First Name', 'Last Name', 'Location', 'User Type']]
+        users = queryset.values_list('username', 'email', 'first_name', 'last_name', 'location', 'user_type')
+        for user in users:
+            data.append(list(user))
 
-        p.drawString(100, 750, "User Data:")
-        draw_table(p, user_headers, user_data, 100, 730)
+        # Create the table
+        table = Table(data)
 
-        # Close the PDF object cleanly, and we're done.
-        p.showPage()
-        p.save()
+        # Add a table style
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
 
-        return response
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 14),
 
-    export_users_as_pdf.short_description = "Export selected users as PDF"
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0,0), (-1,-1), 1, colors.black)
+        ])
+        table.setStyle(style)
+
+        # Add the table to the elements to be added to the PDF
+        elements = []
+        elements.append(table)
+
+        # Build the PDF
+        doc.build(elements)
+
+        # FileResponse sets the Content-Disposition header so that browsers
+        # present the option to save the file.
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename='users.pdf')
+
+    export_selected_to_pdf.short_description = "Export selected users to PDF"
 
 # Register the CustomUser model with the CustomUserAdmin class
-# admin.site.register(CustomUser, CustomUserAdmin)
-
-# Update the registration of CustomUserAdmin
 admin.site.register(CustomUser, CustomUserAdmin)
+
 
 
 
@@ -192,7 +170,80 @@ class ResultAdmin(admin.ModelAdmin):
         }
         return CHOICES.get(str(obj.patient.active), 'Unknown')
     get_patient_active.short_description = 'Physical Activity'
-    
+
+
+    actions = ['export_selected_to_pdf']
+
+    # other methods
+
+
+    def export_selected_to_pdf(self, request, queryset):
+        # Create a file-like buffer to receive PDF data.
+        buffer = io.BytesIO()
+
+        # Create the PDF object, using the buffer as its "file."
+        doc = SimpleDocTemplate(buffer, pagesize=A3)
+
+        # Prepare data for the table
+        data = [['D', 'P', 'A', 'H', 'W', 'G', 'SBP', 'DBP', 'C', 'G', 'S', 'A', 'A', 'P']]
+
+        for result in queryset:
+            doctor_name = result.doctor.full_name() if result.doctor else "Unknown"
+            patient_name = result.patient.patient.full_name() if result.patient and result.patient.patient else "Unknown"
+            data.append([
+                doctor_name,
+                patient_name,
+                result.patient.age,
+                result.patient.height,
+                result.patient.weight,
+                result.patient.gender,
+                result.patient.systolic,
+                result.patient.diastolic,
+                result.patient.cholesterol,
+                result.patient.glucose,
+                result.patient.smoke,
+                result.patient.alcohol,
+                result.patient.active,
+                result.prediction
+            ])
+
+        # Create the table with custom column widths
+        table = Table(data, colWidths=[1.5*inch, 1.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 1.5*inch])
+
+        # Add a table style with custom font size
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),  # Increase font size
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
+        ])
+        table.setStyle(style)
+
+        # Add a paragraph explaining the column names
+        styles = getSampleStyleSheet()
+        column_names = Paragraph('''
+        <para align=center spaceb=3>
+        <b>Column Names:</b> D: Doctor, P: Patient, A: Age, H: Height, W: Weight, G: Gender, SBP: Systolic BP, DBP: Diastolic BP, C: Cholesterol, G: Glucose, S: Smoker, A: Alcohol, A: Active, P: Prediction
+        </para>''', styles['Normal'])
+        # Add the paragraph to the elements to be added to the PDF
+        elements = []
+        elements.append(column_names)
+        elements.append(table)
+
+        # Build the PDF
+        doc.build(elements)
+
+        # FileResponse sets the Content-Disposition header so that browsers
+        # present the option to save the file.
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename='results.pdf')
+
+    export_selected_to_pdf.short_description = "Export selected results to PDF"
     
 admin.site.register(Prediction, PredictionAdmin)
 admin.site.register(Result, ResultAdmin)
