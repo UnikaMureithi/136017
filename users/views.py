@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
-from .forms import UserRegisterForm, UserPredictionForm
-from django.contrib.auth import login, authenticate
+from .forms import UserRegisterForm, UserPredictionForm, OTPForm
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
@@ -17,7 +17,13 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView
 from sklearn.preprocessing import StandardScaler
 
+from .utils import send_otp
+from datetime import datetime
+import pyotp
+from django.contrib.auth.models import User
 
+from .models import CustomUser, Result, Prediction
+from django.db.models import Count
 
 
 # Load the model
@@ -153,18 +159,19 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            if user.is_active:
-                if user.user_type == 'patient':
-                    login(request, user)
-                    return redirect('home')  # Redirect patients to 'home'
-                elif user.user_type == 'doctor':
-                    login(request, user)
-                    return redirect('prediction')  # Redirect doctors to 'prediction'
-                else:
-                    # Handle other roles or unknown users
-                    pass
+            request.session['username'] = username  # Move this line up
+            send_otp(request)
+            return redirect('verify_otp')
+
+        if user.is_active:
+            if user.user_type == 'patient':
+                login(request, user)
+                return redirect('home')  # Redirect patients to 'home'
+            elif user.user_type == 'doctor':
+                login(request, user)
+                return redirect('prediction')  # Redirect doctors to 'prediction'
             else:
-                # Handle inactive users
+                # Handle other roles or unknown users
                 pass
         else:
             # Handle invalid login
@@ -172,4 +179,75 @@ def login_view(request):
 
     return render(request, 'users/login.html')
 
-##
+def verify_otp(request):
+    error_message = None
+    if request.method == 'POST':
+        otp = request.POST['otp']
+        username = request.session['username']
+
+        otp_secret_key = request.session['otp_secret_key']
+        otp_valid_date = request.session['otp_valid_date']
+
+        if otp_secret_key and otp_valid_date is not None:
+            valid_until = datetime.fromisoformat(otp_valid_date)
+
+            if valid_until > datetime.now():
+                totp = pyotp.TOTP(otp_secret_key, interval=60)
+                if totp.verify(otp):
+                    user = get_object_or_404(User, username=username)
+                    login(request, user)
+
+                    del request.session['otp_secret_key']
+                    del request.session['otp_valid_date']
+
+                    return redirect('home')
+                else:
+                    error_message = 'invalid one time password'
+            else:
+                error_message = 'one time password has expired'
+        else:
+            error_message = 'oops....something went wrong'
+
+    return render(request, 'users/verify_otp.html', {'error_message': error_message})
+
+
+def chart_view(request):
+    # Pie chart data
+    user_data = CustomUser.objects.values('location').annotate(user_count=Count('location'))
+    labels = [item['location'] for item in user_data]
+    values = [item['user_count'] for item in user_data]
+
+    # Bar chart data
+    result_data = Result.objects.values('prediction').annotate(user_count=Count('prediction'))
+    bar_labels = [item['prediction'] for item in result_data]
+    bar_values = [item['user_count'] for item in result_data]
+
+    # Doughnut chart data
+    gender_data = Prediction.objects.values('gender').annotate(user_count=Count('gender'))
+    doughnut_labels = [item['gender'] for item in gender_data]
+    doughnut_values = [item['user_count'] for item in gender_data]
+
+    # Scatter chart data
+    scatter_data_absence = Prediction.objects.filter(result__prediction='Absence of CVD').values('height', 'weight')
+    scatter_data_presence = Prediction.objects.filter(result__prediction='Presence of CVD').values('height', 'weight')
+
+    scatter_data = Prediction.objects.select_related('result').values('weight', 'height', 'result__prediction')
+    scatter_labels = ['Weight: {} Height: {}'.format(item['weight'], item['height']) for item in scatter_data]
+    scatter_weights = [item['weight'] for item in scatter_data]
+    scatter_heights = [item['height'] for item in scatter_data]
+    scatter_predictions = [item['result__prediction'] for item in scatter_data]
+
+    scatter_colors = ['red' if prediction == 'Presence of CVD' else 'blue' for prediction in scatter_predictions]
+
+    return render(request, 'users/charts.html', {
+            'labels': labels,
+            'values': values,
+            'scatter_data_absence': list(scatter_data_absence),
+            'scatter_data_presence': list(scatter_data_presence),
+            'scatter_data': list(zip(scatter_weights, scatter_heights)),
+            'scatter_colors': scatter_colors,
+            'bar_labels': bar_labels,
+            'bar_values': bar_values,
+            'doughnut_labels': doughnut_labels,
+            'doughnut_values': doughnut_values,
+        })

@@ -1,0 +1,211 @@
+{% extends 'users/base.html' %}
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <style>
+        body {
+            background-color: black;
+            color: white;
+        }
+    </style> -->
+
+</head>
+<body>
+    <div style="width: 50%; margin: auto;">
+        <canvas id="myChart" width="500" height="500"></canvas>
+    </div>
+
+    <br><br>
+
+    <div style="width: 50%; margin: auto; margin-top: 20px;">
+        <canvas id="barChart" width="400" height="400"></canvas>
+    </div>
+    
+    <br><br>
+
+    <div style="width: 50%; margin: auto; margin-top: 20px;">
+        <canvas id="doughnutChart" width="400" height="400"></canvas>
+    </div>
+    <br><br>
+
+    <div style="width: 50%; margin: auto; margin-top: 20px;">
+        <canvas id="scatterChart" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+        //PIE CHART
+        var labels = {{ labels|safe }};
+        var values = {{ values|safe }};
+    
+        // Define an array of colors for each section
+        var colors = [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(128, 0, 128, 1)',  // Purple
+            'rgba(0, 128, 128, 1)',  // Teal
+            'rgba(255, 0, 255, 1)',  // Magenta
+            'rgba(0, 255, 255, 1)',  // Aqua
+            // Add more colors as needed
+        ];
+    
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Users',
+                    data: values,
+                    backgroundColor: colors,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'right', // Adjust legend position as needed
+                    labels: {
+                        fontColor: 'white' // Set the font color of the legend labels to white
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Distribution of Users by Location',
+                    fontSize: 16
+                },
+            }
+        });
+        
+
+        // BAR CHART
+        var barLabels = {{ bar_labels|safe }};
+        var barValues = {{ bar_values|safe }};
+
+        var ctxBar = document.getElementById('barChart').getContext('2d');
+        var barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Number of Users',
+                    data: barValues,
+                    backgroundColor: [ 'rgba(0, 128, 0, 0.7)', 'rgba(255, 0, 0, 0.9)'],  // Adjust opacity
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],  // Adjust opacity
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'CVD Prediction'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Users'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Doughnut chart
+        var doughnutLabels = {{ doughnut_labels|safe }};
+        var doughnutValues = {{ doughnut_values|safe }};
+
+        var ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+        var doughnutChart = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: doughnutLabels,
+                datasets: [{
+                    data: doughnutValues,
+                    backgroundColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],  // Adjust opacity
+                    borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],  // Adjust opacity
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'right',
+                    labels: {
+                        fontColor: 'white'  // Set the font color of the legend labels to white
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Distribution of Users by Gender',
+                    fontSize: 16
+                }
+            }
+        });
+
+
+        //SCATTER CHART
+        var ctxScatter = document.getElementById('scatterChart').getContext('2d');
+        var scatterChart = new Chart(ctxScatter, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Absence of CVD',
+                    data: {{ scatter_data_absence|safe }},
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)', // Color for absence of CVD points
+                    pointRadius: 8,
+                }, {
+                    label: 'Presence of CVD',
+                    data: {{ scatter_data_presence|safe }},
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)', // Color for presence of CVD points
+                    pointRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: [{
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Height (cm)',
+                        }
+                    }],
+                    y: [{
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Weight (kg)',
+                        }
+                    }]
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
+{% endblock content %}

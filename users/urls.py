@@ -13,5 +13,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('login/', CustomLoginView.as_view(template_name='users/login.html', redirect_authenticated_user=False), name='login'),
     path('logout/', auth_view.LogoutView.as_view(template_name='users/logout.html'), name='logout'),
+    path('verify_otp/', views.verify_otp, name= 'verify_otp'),
+    path('charts/', views.chart_view, name='charts'),
 
 ]
