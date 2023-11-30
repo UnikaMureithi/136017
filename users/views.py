@@ -149,7 +149,7 @@ class CustomLoginView(LoginView):
         if user_type == 'doctor':
             return reverse_lazy('prediction')
         else:
-            return reverse_lazy('home')
+            return reverse_lazy('about')
 
 
 def login_view(request):
@@ -159,7 +159,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            request.session['username'] = username  # Move this line up
+            request.session['username'] = username  
             send_otp(request)
             return redirect('verify_otp')
 
@@ -228,24 +228,24 @@ def chart_view(request):
     doughnut_values = [item['user_count'] for item in gender_data]
 
     # Scatter chart data
-    scatter_data_absence = Prediction.objects.filter(result__prediction='Absence of CVD').values('height', 'weight')
-    scatter_data_presence = Prediction.objects.filter(result__prediction='Presence of CVD').values('height', 'weight')
+    # scatter_data_absence = Prediction.objects.filter(result__prediction='Absence of CVD').values('height', 'weight')
+    # scatter_data_presence = Prediction.objects.filter(result__prediction='Presence of CVD').values('height', 'weight')
 
-    scatter_data = Prediction.objects.select_related('result').values('weight', 'height', 'result__prediction')
-    scatter_labels = ['Weight: {} Height: {}'.format(item['weight'], item['height']) for item in scatter_data]
-    scatter_weights = [item['weight'] for item in scatter_data]
-    scatter_heights = [item['height'] for item in scatter_data]
-    scatter_predictions = [item['result__prediction'] for item in scatter_data]
+    # scatter_data = Prediction.objects.select_related('result').values('weight', 'height', 'result__prediction')
+    # scatter_labels = ['Weight: {} Height: {}'.format(item['weight'], item['height']) for item in scatter_data]
+    # scatter_weights = [item['weight'] for item in scatter_data]
+    # scatter_heights = [item['height'] for item in scatter_data]
+    # scatter_predictions = [item['result__prediction'] for item in scatter_data]
 
-    scatter_colors = ['red' if prediction == 'Presence of CVD' else 'blue' for prediction in scatter_predictions]
+    # scatter_colors = ['red' if prediction == 'Presence of CVD' else 'blue' for prediction in scatter_predictions]
 
     return render(request, 'users/charts.html', {
             'labels': labels,
             'values': values,
-            'scatter_data_absence': list(scatter_data_absence),
-            'scatter_data_presence': list(scatter_data_presence),
-            'scatter_data': list(zip(scatter_weights, scatter_heights)),
-            'scatter_colors': scatter_colors,
+            # 'scatter_data_absence': list(scatter_data_absence),
+            # 'scatter_data_presence': list(scatter_data_presence),
+            # 'scatter_data': list(zip(scatter_weights, scatter_heights)),
+            # 'scatter_colors': scatter_colors,
             'bar_labels': bar_labels,
             'bar_values': bar_values,
             'doughnut_labels': doughnut_labels,
